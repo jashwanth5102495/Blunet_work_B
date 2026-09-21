@@ -6,9 +6,15 @@ import { logAudit } from '../../utils/audit.js';
 
 export const getEmployees = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { search, departmentId, role, isActive } = req.query;
+    const { search, departmentId, role, isActive, org } = req.query;
 
     const where: any = {};
+    if (org) {
+      where.organization = String(org).toUpperCase();
+    } else {
+      where.organization = 'BLUNET';
+    }
+
     if (search) {
       where.OR = [
         { name: { contains: String(search) } },
@@ -30,6 +36,7 @@ export const getEmployees = async (req: Request, res: Response, next: NextFuncti
         phone: true,
         role: true,
         designation: true,
+        organization: true,
         isActive: true,
         joiningDate: true,
         department: { select: { id: true, name: true, code: true } },
@@ -74,7 +81,7 @@ export const getEmployees = async (req: Request, res: Response, next: NextFuncti
 
 export const createEmployee = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { name, email, phone, role, designation, departmentId, temporaryPassword } = req.body;
+    const { name, email, phone, role, designation, departmentId, temporaryPassword, organization } = req.body;
 
     if (!name || !email || !role || !designation || !temporaryPassword) {
       throw new AppError('Name, email, role, designation, and temporary password are required.', 400, 'MISSING_FIELDS');
@@ -85,17 +92,20 @@ export const createEmployee = async (req: Request, res: Response, next: NextFunc
       throw new AppError('An employee with this email already exists.', 400, 'DUPLICATE_EMAIL');
     }
 
+    const targetOrg = organization ? String(organization).toUpperCase() : 'BLUNET';
+    const prefix = targetOrg === 'ANVI' ? 'ANVI-EMP' : 'BLU-EMP';
+
     const allUsers = await db.user.findMany({ select: { employeeId: true } });
     let highestNum = 0;
     for (const u of allUsers) {
-      const match = u.employeeId.match(/^BLU-EMP-(\d+)$/i);
+      const match = u.employeeId.match(/^(?:BLU|ANVI)-EMP-(\d+)$/i);
       if (match) {
         const num = parseInt(match[1], 10);
         if (num > highestNum) highestNum = num;
       }
     }
     const nextNum = highestNum + 1;
-    const employeeId = `BLU-EMP-${String(nextNum).padStart(3, '0')}`;
+    const employeeId = `${prefix}-${String(nextNum).padStart(3, '0')}`;
 
     const passwordHash = await hashPassword(temporaryPassword);
 
@@ -108,6 +118,7 @@ export const createEmployee = async (req: Request, res: Response, next: NextFunc
         role,
         designation,
         departmentId: departmentId || null,
+        organization: targetOrg,
         passwordHash,
       },
       select: {

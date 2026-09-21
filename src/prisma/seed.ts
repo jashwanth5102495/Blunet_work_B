@@ -61,6 +61,7 @@ async function main() {
       role: 'ADMIN',
       designation: 'System Administrator',
       departmentId: deptOps.id,
+      organization: 'BLUNET',
       joiningDate: new Date('2024-01-01'),
     },
   });
@@ -75,6 +76,7 @@ async function main() {
       role: 'ADMIN',
       designation: 'Secret System Administrator',
       departmentId: deptExec.id,
+      organization: 'ANVI',
       joiningDate: new Date('2024-01-01'),
     },
   });
@@ -89,6 +91,7 @@ async function main() {
       role: 'EMPLOYEE',
       designation: 'Software Engineer',
       departmentId: deptEng.id,
+      organization: 'BLUNET',
       joiningDate: new Date('2024-03-01'),
     },
   });
@@ -103,11 +106,12 @@ async function main() {
       role: 'MARKETING_HEAD',
       designation: 'Marketing Head',
       departmentId: deptMkt.id,
+      organization: 'BLUNET',
       joiningDate: new Date('2024-02-15'),
     },
   });
 
-  const an1012User = await prisma.user.create({
+  const anvi1012User = await prisma.user.create({
     data: {
       employeeId: 'AN1012',
       name: 'Anvi Marketing Head',
@@ -117,7 +121,24 @@ async function main() {
       role: 'MARKETING_HEAD',
       designation: 'Marketing Lead (Anvi)',
       departmentId: deptMkt.id,
+      organization: 'ANVI',
       joiningDate: new Date('2024-02-20'),
+    },
+  });
+
+  const anviEmpPasswordHash = await bcrypt.hash('Password#1234', 10);
+  await prisma.user.create({
+    data: {
+      employeeId: 'ANVI-EMP-001',
+      name: 'Anvi Staff Associate',
+      email: 'staff@anvi.com',
+      phone: '+91 98765 43215',
+      passwordHash: anviEmpPasswordHash,
+      role: 'EMPLOYEE',
+      designation: 'Marketing Associate (Anvi)',
+      departmentId: deptMkt.id,
+      organization: 'ANVI',
+      joiningDate: new Date('2024-03-01'),
     },
   });
 
@@ -135,7 +156,7 @@ async function main() {
     },
   });
 
-  console.log('✅ Created Real Accounts: admin, EMP1022, MA1011, AN1012, FOUNDER01');
+  console.log('✅ Created Real Accounts: admin, EMP1022, MA1011, AN1012, ANVI-EMP-001, FOUNDER01');
 
   // 3. Resource Categories
   const categories = [
@@ -179,6 +200,7 @@ async function main() {
       month: currentMonth,
       year: currentYear,
       status: 'ACTIVE',
+      organization: 'BLUNET',
     },
   });
 

@@ -77,6 +77,7 @@ export const getAdminOverviewReport = async (req: Request, res: Response, next: 
     const now = new Date();
     const currentMonth = now.getMonth() + 1;
     const currentYear = now.getFullYear();
+    const targetOrg = req.query.org ? String(req.query.org).toUpperCase() : 'BLUNET';
 
     const [
       totalEmployees,
@@ -95,8 +96,8 @@ export const getAdminOverviewReport = async (req: Request, res: Response, next: 
       target,
       employeeWorkloadData,
     ] = await Promise.all([
-      db.user.count(),
-      db.user.count({ where: { isActive: true } }),
+      db.user.count({ where: { organization: targetOrg } }),
+      db.user.count({ where: { organization: targetOrg, isActive: true } }),
       db.task.count(),
       db.task.count({ where: { status: 'COMPLETED' } }),
       db.task.count({ where: { status: 'IN_PROGRESS' } }),
@@ -112,6 +113,7 @@ export const getAdminOverviewReport = async (req: Request, res: Response, next: 
         where: { month_year: { month: currentMonth, year: currentYear } },
       }),
       db.user.findMany({
+        where: { organization: targetOrg },
         select: {
           id: true,
           name: true,

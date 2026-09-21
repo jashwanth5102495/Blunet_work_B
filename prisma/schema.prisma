@@ -1,5 +1,5 @@
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -27,6 +27,7 @@ model User {
   designation     String
   departmentId    String?
   department      Department?       @relation(fields: [departmentId], references: [id])
+  organization    String            @default("BLUNET") // BLUNET, ANVI
   joiningDate     DateTime          @default(now())
   isActive        Boolean           @default(true)
   
@@ -46,6 +47,7 @@ model User {
   @@index([employeeId])
   @@index([email])
   @@index([role])
+  @@index([organization])
 }
 
 model Task {
@@ -128,15 +130,18 @@ model Resource {
 }
 
 model LeadCampaign {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  month       Int
-  year        Int
-  status      String   @default("ACTIVE")
-  leads       Lead[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(uuid())
+  name         String
+  description  String?
+  month        Int
+  year         Int
+  status       String   @default("ACTIVE")
+  organization String   @default("BLUNET") // BLUNET, ANVI
+  leads        Lead[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([organization])
 }
 
 model Lead {

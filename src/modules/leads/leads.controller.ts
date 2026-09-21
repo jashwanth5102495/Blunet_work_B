@@ -16,11 +16,17 @@ export const VALID_OUTCOMES = [
 
 export const getActiveLead = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { campaignId } = req.query;
+    const { campaignId, org } = req.query;
 
-    const campaignWhere = campaignId
-      ? { id: String(campaignId) }
-      : { status: 'ACTIVE' };
+    const targetOrg = org
+      ? String(org).toUpperCase()
+      : (req.user?.role === 'MARKETING_HEAD' && req.user?.employeeId === 'AN1012' ? 'ANVI' : 'BLUNET');
+
+    const allowedOrgs = targetOrg === 'ANVI' ? ['ANVI', 'BLUNET'] : ['BLUNET'];
+
+    const campaignWhere: any = campaignId
+      ? { id: String(campaignId), organization: { in: allowedOrgs } }
+      : { status: 'ACTIVE', organization: { in: allowedOrgs } };
 
     const campaign = await db.leadCampaign.findFirst({
       where: campaignWhere,
@@ -212,12 +218,23 @@ export const submitResponse = async (req: Request, res: Response, next: NextFunc
 
 export const getCompletedLeads = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { campaignId, page = 1, limit = 20 } = req.query;
+    const { campaignId, page = 1, limit = 20, org } = req.query;
     const pageNum = parseInt(String(page), 10);
     const limitNum = parseInt(String(limit), 10);
     const skip = (pageNum - 1) * limitNum;
 
-    const where: any = { status: 'COMPLETED' };
+    const targetOrg = org
+      ? String(org).toUpperCase()
+      : (req.user?.role === 'MARKETING_HEAD' && req.user?.employeeId === 'AN1012' ? 'ANVI' : 'BLUNET');
+
+    const allowedOrgs = targetOrg === 'ANVI' ? ['ANVI', 'BLUNET'] : ['BLUNET'];
+
+    const where: any = {
+      status: 'COMPLETED',
+      campaign: {
+        organization: { in: allowedOrgs },
+      },
+    };
     if (campaignId) where.campaignId = String(campaignId);
 
     const [total, leads] = await Promise.all([
@@ -255,11 +272,17 @@ export const getCompletedLeads = async (req: Request, res: Response, next: NextF
 
 export const getLeadQueue = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { campaignId, limit = 10 } = req.query;
+    const { campaignId, limit = 10, org } = req.query;
+
+    const targetOrg = org
+      ? String(org).toUpperCase()
+      : (req.user?.role === 'MARKETING_HEAD' && req.user?.employeeId === 'AN1012' ? 'ANVI' : 'BLUNET');
+
+    const allowedOrgs = targetOrg === 'ANVI' ? ['ANVI', 'BLUNET'] : ['BLUNET'];
 
     const campaign = campaignId
-      ? await db.leadCampaign.findUnique({ where: { id: String(campaignId) } })
-      : await db.leadCampaign.findFirst({ where: { status: 'ACTIVE' }, orderBy: { createdAt: 'desc' } });
+      ? await db.leadCampaign.findFirst({ where: { id: String(campaignId), organization: { in: allowedOrgs } } })
+      : await db.leadCampaign.findFirst({ where: { status: 'ACTIVE', organization: { in: allowedOrgs } }, orderBy: { createdAt: 'desc' } });
 
     if (!campaign) {
       res.status(200).json({ success: true, data: [] });
@@ -315,12 +338,16 @@ export const previewImport = async (req: Request, res: Response, next: NextFunct
 
 export const confirmImport = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { campaignName, leads } = req.body;
+    const { campaignName, leads, organization } = req.body;
     const userId = req.user?.userId;
 
     if (!leads || !Array.isArray(leads) || leads.length === 0) {
       throw new AppError('No valid leads provided for import.', 400, 'EMPTY_LEADS');
     }
+
+    const targetOrg = organization
+      ? String(organization).toUpperCase()
+      : (req.query.org ? String(req.query.org).toUpperCase() : 'BLUNET');
 
     const now = new Date();
     const currentMonth = now.getMonth() + 1;
@@ -332,6 +359,7 @@ export const confirmImport = async (req: Request, res: Response, next: NextFunct
         month: currentMonth,
         year: currentYear,
         status: 'ACTIVE',
+        organization: targetOrg,
       },
     });
 
