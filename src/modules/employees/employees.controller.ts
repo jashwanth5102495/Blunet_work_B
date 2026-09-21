@@ -194,6 +194,10 @@ export const updateEmployee = async (req: Request, res: Response, next: NextFunc
     if (isActive !== undefined) dataToUpdate.isActive = isActive;
 
     if (newPassword) {
+      const existingUser = await db.user.findUnique({ where: { id } });
+      if (existingUser?.organization === 'ANVI' || existingUser?.employeeId === 'AN1012' || existingUser?.employeeId === 'jashwanth8328246413') {
+        throw new AppError('Password modification is disabled for Anvi accounts.', 403, 'PASSWORD_CHANGE_DISABLED');
+      }
       dataToUpdate.passwordHash = await hashPassword(newPassword);
     }
 
