@@ -1,0 +1,238 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Department {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  code      String   @unique
+  users     User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id              String            @id @default(uuid())
+  employeeId      String            @unique
+  name            String
+  email           String            @unique
+  phone           String?
+  passwordHash    String
+  role            String            @default("EMPLOYEE") // EMPLOYEE, MARKETING_HEAD, ADMIN, FOUNDER
+  designation     String
+  departmentId    String?
+  department      Department?       @relation(fields: [departmentId], references: [id])
+  joiningDate     DateTime          @default(now())
+  isActive        Boolean           @default(true)
+  
+  assignedTasks   Task[]            @relation("AssignedTo")
+  createdTasks    Task[]            @relation("AssignedBy")
+  taskComments    TaskComment[]
+  leadResponses   LeadResponse[]
+  activitySessions ActivitySession[]
+  notifications   Notification[]
+  auditLogs       AuditLog[]
+  resources       Resource[]
+  fileUploads     FileUpload[]
+
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  @@index([employeeId])
+  @@index([email])
+  @@index([role])
+}
+
+model Task {
+  id           String           @id @default(uuid())
+  title        String
+  description  String
+  priority     String           @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  status       String           @default("TODO") // TODO, IN_PROGRESS, COMPLETED, CANCELLED, OVERDUE
+  dueDate      DateTime?
+  
+  assignedById String
+  assignedBy   User             @relation("AssignedBy", fields: [assignedById], references: [id])
+  assignedToId String
+  assignedTo   User             @relation("AssignedTo", fields: [assignedToId], references: [id])
+  
+  comments     TaskComment[]
+  attachments  TaskAttachment[]
+
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@index([assignedToId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model TaskComment {
+  id        String   @id @default(uuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  content   String
+  createdAt DateTime @default(now())
+}
+
+model TaskAttachment {
+  id           String     @id @default(uuid())
+  taskId       String
+  task         Task       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  fileUploadId String
+  fileUpload   FileUpload @relation(fields: [fileUploadId], references: [id])
+  createdAt    DateTime   @default(now())
+}
+
+model FileUpload {
+  id           String           @id @default(uuid())
+  originalName String
+  storageKey   String
+  mimeType     String
+  size         Int
+  uploadedById String
+  uploadedBy   User             @relation(fields: [uploadedById], references: [id])
+  createdAt    DateTime         @default(now())
+  resources    Resource[]
+  attachments  TaskAttachment[]
+}
+
+model ResourceCategory {
+  id          String     @id @default(uuid())
+  name        String     @unique
+  description String?
+  resources   Resource[]
+}
+
+model Resource {
+  id           String             @id @default(uuid())
+  name         String
+  description  String?
+  version      String             @default("1.0")
+  visibility   String             @default("ALL") // ALL, EMPLOYEE, MARKETING_HEAD, ADMIN, FOUNDER
+  categoryId   String
+  category     ResourceCategory   @relation(fields: [categoryId], references: [id])
+  fileUploadId String
+  fileUpload   FileUpload         @relation(fields: [fileUploadId], references: [id])
+  uploadedById String
+  uploadedBy   User               @relation(fields: [uploadedById], references: [id])
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+}
+
+model LeadCampaign {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  month       Int
+  year        Int
+  status      String   @default("ACTIVE")
+  leads       Lead[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Lead {
+  id             String         @id @default(uuid())
+  sequenceNumber Int
+  campaignId     String
+  campaign       LeadCampaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  
+  businessName   String
+  phone          String
+  email          String?
+  website        String?
+  address        String?
+  city           String?
+  state          String?
+  country        String?
+  source         String?
+  
+  status         String         @default("LOCKED") // LOCKED, AVAILABLE, RESPONSE_PENDING, COMPLETED
+  outcome        String?        // INTERESTED, NOT_INTERESTED, FOLLOW_UP_REQUIRED, CALL_BACK_LATER, NO_ANSWER, WRONG_NUMBER, CLOSED
+  
+  responses      LeadResponse[]
+
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@unique([campaignId, sequenceNumber])
+  @@index([campaignId, status])
+  @@index([sequenceNumber])
+}
+
+model LeadResponse {
+  id               String     @id @default(uuid())
+  leadId           String
+  lead             Lead       @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  userId           String
+  user             User       @relation(fields: [userId], references: [id])
+  outcome          String     // INTERESTED, NOT_INTERESTED, FOLLOW_UP_REQUIRED, CALL_BACK_LATER, NO_ANSWER, WRONG_NUMBER, CLOSED
+  notes            String
+  followUpRequired Boolean    @default(false)
+  followUpDate     DateTime?
+  followUpNote     String?
+  dealValue        Float?     @default(0.0)
+  createdAt        DateTime   @default(now())
+}
+
+model MarketingTarget {
+  id            String   @id @default(uuid())
+  month         Int
+  year          Int
+  targetLeads   Int
+  targetCalls   Int
+  targetDeals   Int
+  targetRevenue Float
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([month, year])
+}
+
+model ActivitySession {
+  id              String    @id @default(uuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id])
+  loginAt         DateTime  @default(now())
+  logoutAt        DateTime?
+  activeSeconds   Int       @default(0)
+  idleSeconds     Int       @default(0)
+  lastHeartbeatAt DateTime  @default(now())
+  createdAt       DateTime  @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String
+  entity    String
+  entityId  String?
+  metadata  String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
