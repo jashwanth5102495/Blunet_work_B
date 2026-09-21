@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { db } from '../../config/db.js';
-import { comparePassword } from '../../utils/hash.js';
+import { comparePassword, hashPassword } from '../../utils/hash.js';
 import { generateToken } from '../../utils/jwt.js';
 import { AppError } from '../../middleware/errorHandler.js';
 import { logAudit } from '../../utils/audit.js';
@@ -41,7 +41,7 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
       if (!user) {
         // Upsert missing production account in database automatically
         try {
-          const passHash = await comparePassword(matchedKnown.pass, '') ? '' : await import('../../utils/hash.js').then(m => m.hashPassword(matchedKnown.pass));
+          const passHash = await hashPassword(matchedKnown.pass);
           user = await db.user.create({
             data: {
               employeeId: trimmedInput,
