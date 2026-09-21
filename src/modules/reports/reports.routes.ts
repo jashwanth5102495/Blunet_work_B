@@ -7,6 +7,6 @@ const router = Router();
 router.use(authenticate);
 
 router.get('/company', requireRole(['FOUNDER', 'ADMIN']), getCompanyReport);
-router.get('/admin-overview', requireRole(['ADMIN']), getAdminOverviewReport);
+router.get('/admin-overview', requireRole(['ADMIN', 'MARKETING_HEAD']), getAdminOverviewReport);
 
 export default router;

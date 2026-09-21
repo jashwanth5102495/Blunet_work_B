@@ -6,6 +6,6 @@ const router = Router();
 
 router.use(authenticate);
 
-router.get('/', requireRole(['ADMIN']), getAuditLogs);
+router.get('/', requireRole(['ADMIN', 'MARKETING_HEAD']), getAuditLogs);
 
 export default router;
