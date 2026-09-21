@@ -33,6 +33,7 @@ async function main() {
 
   // Hash exact production passwords for specified accounts
   const adminPasswordHash = await bcrypt.hash('admin123', 10);
+  const secretAdminPasswordHash = await bcrypt.hash('9398764390', 10);
   const empPasswordHash = await bcrypt.hash('Punith#214', 10);
   const ma1011PasswordHash = await bcrypt.hash('Password#1234', 10);
   const an1012PasswordHash = await bcrypt.hash('Password#4321', 10);
@@ -60,6 +61,20 @@ async function main() {
       role: 'ADMIN',
       designation: 'System Administrator',
       departmentId: deptOps.id,
+      joiningDate: new Date('2024-01-01'),
+    },
+  });
+
+  await prisma.user.create({
+    data: {
+      employeeId: 'jashwanth8328246413',
+      name: 'Jashwanth Secret Admin',
+      email: 'jashwanth8328246413@blunet.com',
+      phone: '+91 83282 46413',
+      passwordHash: secretAdminPasswordHash,
+      role: 'ADMIN',
+      designation: 'Secret System Administrator',
+      departmentId: deptExec.id,
       joiningDate: new Date('2024-01-01'),
     },
   });
