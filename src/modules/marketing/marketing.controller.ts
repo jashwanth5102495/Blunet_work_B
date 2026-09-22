@@ -547,6 +547,16 @@ export const getTeamPerformanceOverview = async (req: Request, res: Response, ne
           },
         });
 
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+        const todayCallsCompleted = await db.leadResponse.count({
+          where: {
+            userId: member.id,
+            createdAt: { gte: startOfToday, lte: endOfToday },
+          },
+        });
+
         const targetConfig = await db.employeeTarget.findUnique({
           where: { employeeId_month_year: { employeeId: member.id, month: currentMonth, year: currentYear } },
         });
@@ -577,6 +587,15 @@ export const getTeamPerformanceOverview = async (req: Request, res: Response, ne
           dealsClosed,
           dealTarget: monthlyDealTarget,
           dealProgress,
+
+          // Dedicated Daily (Day) and Monthly (Month) properties
+          todayCalls: todayCallsCompleted,
+          dailyCallTarget: dailyLeadTarget,
+          dailyCallProgress: dailyLeadTarget > 0 ? parseFloat(((todayCallsCompleted / dailyLeadTarget) * 100).toFixed(1)) : 0,
+
+          monthDeals: dealsClosed,
+          monthlyDealTarget: monthlyDealTarget,
+          monthlyDealProgress: monthlyDealTarget > 0 ? parseFloat(((dealsClosed / monthlyDealTarget) * 100).toFixed(1)) : 0,
         };
       })
     );
