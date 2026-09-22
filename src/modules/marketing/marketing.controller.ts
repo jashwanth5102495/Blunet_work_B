@@ -164,7 +164,7 @@ export const getTeamSummary = async (req: Request, res: Response, next: NextFunc
 
     const members = await db.user.findMany({
       where: {
-        role: { in: ['MARKETING_HEAD', 'EMPLOYEE'] },
+        role: 'MARKETING_HEAD',
         organization: targetOrg,
       },
       select: {
@@ -482,7 +482,7 @@ export const getTeamPerformanceOverview = async (req: Request, res: Response, ne
 
     const members = await db.user.findMany({
       where: {
-        role: { in: ['MARKETING_HEAD', 'EMPLOYEE'] },
+        role: 'MARKETING_HEAD',
         organization: targetOrg,
       },
       select: {
