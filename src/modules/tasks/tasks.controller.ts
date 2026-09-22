@@ -213,3 +213,30 @@ export const addTaskComment = async (req: Request, res: Response, next: NextFunc
     next(err);
   }
 };
+
+export const deleteTask = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const id = String(req.params.id);
+    const userId = req.user?.userId;
+    const role = req.user?.role;
+
+    const task = await db.task.findUnique({ where: { id } });
+    if (!task) {
+      throw new AppError('Task not found.', 404, 'NOT_FOUND');
+    }
+
+    if (role === 'EMPLOYEE' && task.assignedById !== userId) {
+      throw new AppError('Only admins, marketing heads, founders, or task creators can delete this task.', 403, 'FORBIDDEN');
+    }
+
+    await db.task.delete({ where: { id } });
+    await logAudit(userId, 'TASK_DELETED', 'Task', id, { title: task.title }, req.ip);
+
+    res.status(200).json({
+      success: true,
+      message: 'Task removed successfully.',
+    });
+  } catch (err) {
+    next(err);
+  }
+};
