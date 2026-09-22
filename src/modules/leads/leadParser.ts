@@ -28,6 +28,42 @@ export interface ImportPreviewResult {
   invalidLeads: ParsedLeadItem[];
 }
 
+const normalizeKey = (key: string) => key.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+const getRecordValue = (rec: Record<string, any>, possibleKeys: string[]): string => {
+  const normKeys = possibleKeys.map(normalizeKey);
+  for (const rawKey of Object.keys(rec)) {
+    const normKey = normalizeKey(rawKey);
+    if (normKeys.includes(normKey)) {
+      const val = rec[rawKey];
+      if (val !== undefined && val !== null) {
+        if (typeof val === 'number') {
+          return Number.isInteger(val) ? String(val) : val.toFixed(0);
+        }
+        return String(val).trim();
+      }
+    }
+  }
+  return '';
+};
+
+const BNAME_KEYS = [
+  'businessname', 'business', 'companyname', 'company', 'name', 'leadname',
+  'business_name', 'company_name', 'firm', 'organization', 'title', 'lead', 'client'
+];
+const PHONE_KEYS = [
+  'phone', 'phonenumber', 'phone_number', 'contact', 'contactnumber', 'contact_number',
+  'mobile', 'mobilenumber', 'mobile_number', 'phoneno', 'mobileno', 'tel', 'telephone',
+  'mobile_no', 'phone_no', 'contacts', 'contactno', 'contact_no'
+];
+const EMAIL_KEYS = ['email', 'emailaddress', 'email_address', 'emailid', 'email_id', 'mail'];
+const WEBSITE_KEYS = ['website', 'web', 'site', 'url', 'domain'];
+const ADDRESS_KEYS = ['address', 'location', 'street', 'address1', 'address_line'];
+const CITY_KEYS = ['city', 'town'];
+const STATE_KEYS = ['state', 'region', 'province'];
+const COUNTRY_KEYS = ['country', 'nation'];
+const SOURCE_KEYS = ['source', 'leadsource', 'lead_source'];
+
 export const parseLeadFile = async (
   buffer: Buffer,
   mimeType: string,
@@ -45,32 +81,32 @@ export const parseLeadFile = async (
     });
 
     rawItems = records.map((rec: any) => ({
-      businessName: rec['Business Name'] || rec['Company'] || rec['businessName'] || rec['name'] || '',
-      phone: rec['Phone'] || rec['Phone Number'] || rec['phone'] || rec['mobile'] || '',
-      email: rec['Email'] || rec['email'] || '',
-      website: rec['Website'] || rec['website'] || '',
-      address: rec['Address'] || rec['address'] || '',
-      city: rec['City'] || rec['city'] || '',
-      state: rec['State'] || rec['state'] || '',
-      country: rec['Country'] || rec['country'] || 'India',
-      source: rec['Source'] || rec['source'] || 'Import File',
+      businessName: getRecordValue(rec, BNAME_KEYS),
+      phone: getRecordValue(rec, PHONE_KEYS),
+      email: getRecordValue(rec, EMAIL_KEYS),
+      website: getRecordValue(rec, WEBSITE_KEYS),
+      address: getRecordValue(rec, ADDRESS_KEYS),
+      city: getRecordValue(rec, CITY_KEYS),
+      state: getRecordValue(rec, STATE_KEYS),
+      country: getRecordValue(rec, COUNTRY_KEYS) || 'India',
+      source: getRecordValue(rec, SOURCE_KEYS) || 'CSV Import',
     }));
   } else if (ext === 'xlsx' || ext === 'xls' || mimeType.includes('spreadsheet') || mimeType.includes('excel')) {
     const workbook = xlsx.read(buffer, { type: 'buffer' });
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
-    const records = xlsx.utils.sheet_to_json(sheet);
+    const records = xlsx.utils.sheet_to_json(sheet) as Record<string, any>[];
 
     rawItems = records.map((rec: any) => ({
-      businessName: rec['Business Name'] || rec['Company'] || rec['businessName'] || rec['Name'] || '',
-      phone: String(rec['Phone'] || rec['Phone Number'] || rec['phone'] || rec['Mobile'] || ''),
-      email: rec['Email'] || rec['email'] || '',
-      website: rec['Website'] || rec['website'] || '',
-      address: rec['Address'] || rec['address'] || '',
-      city: rec['City'] || rec['city'] || '',
-      state: rec['State'] || rec['state'] || '',
-      country: rec['Country'] || rec['country'] || 'India',
-      source: rec['Source'] || rec['source'] || 'Import File',
+      businessName: getRecordValue(rec, BNAME_KEYS),
+      phone: getRecordValue(rec, PHONE_KEYS),
+      email: getRecordValue(rec, EMAIL_KEYS),
+      website: getRecordValue(rec, WEBSITE_KEYS),
+      address: getRecordValue(rec, ADDRESS_KEYS),
+      city: getRecordValue(rec, CITY_KEYS),
+      state: getRecordValue(rec, STATE_KEYS),
+      country: getRecordValue(rec, COUNTRY_KEYS) || 'India',
+      source: getRecordValue(rec, SOURCE_KEYS) || 'Excel Import',
     }));
   } else if (ext === 'pdf' || mimeType.includes('pdf')) {
     const pdfData = await pdfParse(buffer);
@@ -89,11 +125,18 @@ export const parseLeadFile = async (
         currentLead.email = emailMatch[0];
       }
 
-      if (!currentLead.businessName && line.length > 3 && !emailMatch && !phoneMatch && !line.startsWith('Page') && !line.startsWith('Lead')) {
-        currentLead.businessName = line;
+      if (
+        !currentLead.businessName &&
+        line.length > 2 &&
+        !emailMatch &&
+        !phoneMatch &&
+        !line.startsWith('Page') &&
+        !line.startsWith('Lead')
+      ) {
+        // Strip leading numbers or bullets like "1.", "2)", etc.
+        currentLead.businessName = line.replace(/^[0-9]+[\.\)\s-]+/, '').trim();
       }
 
-      // When we have businessName and phone, push lead item
       if (currentLead.businessName && currentLead.phone) {
         currentLead.source = 'PDF Import';
         currentLead.country = 'India';
@@ -142,10 +185,18 @@ export const parseLeadFile = async (
       continue;
     }
 
+    // Format phone nicely: if cleanPhone is 10 digits starting with 6-9, format with +91
+    let formattedPhone = rawPhone;
+    if (cleanPhone.length === 10 && /^[6-9]/.test(cleanPhone)) {
+      formattedPhone = `+91 ${cleanPhone}`;
+    } else if (cleanPhone.length === 12 && cleanPhone.startsWith('91')) {
+      formattedPhone = `+91 ${cleanPhone.slice(2)}`;
+    }
+
     const isDup = existingPhones.has(cleanPhone) || (email !== '' && existingEmails.has(email));
     const leadObj: ParsedLeadItem = {
       businessName: bName,
-      phone: rawPhone,
+      phone: formattedPhone,
       email: email || undefined,
       website: item.website || undefined,
       address: item.address || undefined,
@@ -177,3 +228,4 @@ export const parseLeadFile = async (
     invalidLeads,
   };
 };
+

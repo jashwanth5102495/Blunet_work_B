@@ -26,7 +26,7 @@ router.get('/completed', requireRole(['MARKETING_HEAD', 'ADMIN']), getCompletedL
 router.post('/:id/call-made', requireRole(['MARKETING_HEAD', 'ADMIN']), markCallMade);
 router.post('/:id/response', requireRole(['MARKETING_HEAD', 'ADMIN']), submitResponse);
 
-router.post('/import/preview', requireRole(['ADMIN']), upload.single('file'), previewImport);
-router.post('/import/confirm', requireRole(['ADMIN']), confirmImport);
+router.post('/import/preview', requireRole(['ADMIN', 'MARKETING_HEAD']), upload.single('file'), previewImport);
+router.post('/import/confirm', requireRole(['ADMIN', 'MARKETING_HEAD']), confirmImport);
 
 export default router;
