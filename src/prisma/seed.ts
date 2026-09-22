@@ -42,6 +42,8 @@ async function main() {
   // Clear previous dummy users and transactional data cleanly
   await prisma.taskComment.deleteMany({});
   await prisma.task.deleteMany({});
+  await prisma.deal.deleteMany({});
+  await prisma.employeeTarget.deleteMany({});
   await prisma.leadResponse.deleteMany({});
   await prisma.lead.deleteMany({});
   await prisma.leadCampaign.deleteMany({});
@@ -268,6 +270,39 @@ async function main() {
       dueDate: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000),
       assignedById: ma1011User.id,
       assignedToId: empUser.id,
+    },
+  });
+
+  // 7. Individual Employee Targets & Closed Deals
+  await prisma.employeeTarget.upsert({
+    where: { employeeId_month_year: { employeeId: ma1011User.id, month: currentMonth, year: currentYear } },
+    update: {},
+    create: {
+      employeeId: ma1011User.id,
+      month: currentMonth,
+      year: currentYear,
+      dailyLeadTarget: 20,
+      monthlyDealTarget: 7,
+    },
+  });
+
+  await prisma.deal.create({
+    data: {
+      marketingPersonId: ma1011User.id,
+      projectName: 'Apex Tech Enterprise Cloud Migration',
+      status: 'WON',
+      value: 120000,
+      closedAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000),
+    },
+  });
+
+  await prisma.deal.create({
+    data: {
+      marketingPersonId: ma1011User.id,
+      projectName: 'CloudMatrix Global Portal',
+      status: 'WON',
+      value: 250000,
+      closedAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000),
     },
   });
 

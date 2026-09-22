@@ -167,6 +167,20 @@ export const submitResponse = async (req: Request, res: Response, next: NextFunc
         },
       });
 
+      // If outcome is CLOSED or WON, record a Closed Deal credited to marketingPersonId
+      if (outcome === 'CLOSED' || outcome === 'WON') {
+        await tx.deal.create({
+          data: {
+            leadId: currentLead.id,
+            marketingPersonId: userId,
+            projectName: `${currentLead.businessName} Project`,
+            status: 'WON',
+            value: dealValue ? parseFloat(dealValue) : 0.0,
+            closedAt: new Date(),
+          },
+        });
+      }
+
       // Mark current lead COMPLETED
       await tx.lead.update({
         where: { id: currentLead.id },

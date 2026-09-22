@@ -1,5 +1,5 @@
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -35,6 +35,9 @@ model User {
   createdTasks    Task[]            @relation("AssignedBy")
   taskComments    TaskComment[]
   leadResponses   LeadResponse[]
+  assignedLeads   Lead[]            @relation("AssignedLeads")
+  deals           Deal[]            @relation("MarketingPersonDeals")
+  employeeTargets EmployeeTarget[]  @relation("EmployeeTargets")
   activitySessions ActivitySession[]
   notifications   Notification[]
   auditLogs       AuditLog[]
@@ -149,6 +152,8 @@ model Lead {
   sequenceNumber Int
   campaignId     String
   campaign       LeadCampaign   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  assignedToId   String?
+  assignedTo     User?          @relation("AssignedLeads", fields: [assignedToId], references: [id], onDelete: SetNull)
   
   businessName   String
   phone          String
@@ -164,6 +169,7 @@ model Lead {
   outcome        String?        // INTERESTED, NOT_INTERESTED, FOLLOW_UP_REQUIRED, CALL_BACK_LATER, NO_ANSWER, WRONG_NUMBER, CLOSED
   
   responses      LeadResponse[]
+  deals          Deal[]
 
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
@@ -171,6 +177,40 @@ model Lead {
   @@unique([campaignId, sequenceNumber])
   @@index([campaignId, status])
   @@index([sequenceNumber])
+  @@index([assignedToId])
+}
+
+model Deal {
+  id                String     @id @default(uuid())
+  leadId            String?
+  lead              Lead?      @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  marketingPersonId String
+  marketingPerson   User       @relation("MarketingPersonDeals", fields: [marketingPersonId], references: [id], onDelete: Cascade)
+  projectName       String
+  status            String     @default("WON") // OPEN, INTERESTED, FOLLOW_UP, NEGOTIATION, WON, LOST
+  value             Float      @default(0.0)
+  closedAt          DateTime   @default(now())
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  @@index([marketingPersonId])
+  @@index([status])
+  @@index([closedAt])
+}
+
+model EmployeeTarget {
+  id                String   @id @default(uuid())
+  employeeId        String
+  employee          User     @relation("EmployeeTargets", fields: [employeeId], references: [id], onDelete: Cascade)
+  month             Int
+  year              Int
+  dailyLeadTarget   Int      @default(20)
+  monthlyDealTarget Int      @default(7)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([employeeId, month, year])
+  @@index([employeeId])
 }
 
 model LeadResponse {
