@@ -154,13 +154,27 @@ export const getEmployeeById = async (req: Request, res: Response, next: NextFun
       include: {
         department: true,
         assignedTasks: {
-          select: { id: true, title: true, priority: true, status: true, dueDate: true },
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            priority: true,
+            status: true,
+            dueDate: true,
+            createdAt: true,
+            assignedBy: { select: { id: true, name: true, employeeId: true } },
+          },
           orderBy: { createdAt: 'desc' },
-          take: 10,
         },
         activitySessions: {
           orderBy: { createdAt: 'desc' },
-          take: 5,
+          take: 30,
+        },
+        studyProgress: {
+          where: { completed: true },
+        },
+        codingSubmissions: {
+          orderBy: { submittedAt: 'desc' },
         },
       },
     });
@@ -173,7 +187,12 @@ export const getEmployeeById = async (req: Request, res: Response, next: NextFun
 
     res.status(200).json({
       success: true,
-      data: sanitized,
+      data: {
+        ...sanitized,
+        studyLessonsCompletedCount: sanitized.studyProgress.length,
+        codingTasksCompletedCount: sanitized.codingSubmissions.length,
+        totalMonthlyCodingTasks: 40,
+      },
     });
   } catch (err) {
     next(err);

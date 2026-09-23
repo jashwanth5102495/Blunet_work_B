@@ -1,5 +1,5 @@
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -43,6 +43,8 @@ model User {
   auditLogs       AuditLog[]
   resources       Resource[]
   fileUploads     FileUpload[]
+  studyProgress   UserStudyProgress[]
+  codingSubmissions UserCodingTaskSubmission[]
 
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
@@ -280,4 +282,31 @@ model AuditLog {
 
   @@index([userId])
   @@index([createdAt])
+}
+
+model UserStudyProgress {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseSlug  String   // 'javascript', 'typescript'
+  lessonId    String
+  completed   Boolean  @default(true)
+  completedAt DateTime @default(now())
+
+  @@unique([userId, courseSlug, lessonId])
+  @@index([userId, courseSlug])
+}
+
+model UserCodingTaskSubmission {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  month       Int      @default(1)
+  taskId      String
+  code        String
+  status      String   @default("COMPLETED")
+  submittedAt DateTime @default(now())
+
+  @@unique([userId, month, taskId])
+  @@index([userId, month])
 }

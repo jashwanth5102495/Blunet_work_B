@@ -9,6 +9,7 @@ import activityRoutes from './modules/activity/activity.routes.js';
 import notificationRoutes from './modules/notifications/notifications.routes.js';
 import reportRoutes from './modules/reports/reports.routes.js';
 import auditRoutes from './modules/audit/audit.routes.js';
+import studyRoutes from './modules/study/study.routes.js';
 
 const router = Router();
 
@@ -22,5 +23,6 @@ router.use('/activity', activityRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/reports', reportRoutes);
 router.use('/audit-logs', auditRoutes);
+router.use('/study', studyRoutes);
 
 export default router;
