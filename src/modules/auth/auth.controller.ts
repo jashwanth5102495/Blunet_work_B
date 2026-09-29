@@ -56,7 +56,7 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
               role: matchedKnown.role,
               designation: matchedKnown.designation,
               organization: matchedKnown.org,
-              joiningDate: new Date('2024-01-01'),
+              joiningDate: trimmedInput.toLowerCase() === 'emp1022' ? new Date('2026-09-21') : new Date('2024-01-01'),
               isActive: true,
             },
             include: { department: true },
@@ -161,7 +161,7 @@ export const login = async (req: Request, res: Response, next: NextFunction): Pr
           designation: user.designation,
           organization: user.organization,
           department: user.department ? user.department.name : null,
-          joiningDate: user.joiningDate,
+          joiningDate: user.employeeId?.toUpperCase() === 'EMP1022' || user.email?.toLowerCase() === 'punith@blunet.com' ? new Date('2026-09-21') : user.joiningDate,
         },
       },
       message: 'Logged in successfully.',
@@ -198,9 +198,14 @@ export const getMe = async (req: Request, res: Response, next: NextFunction): Pr
       throw new AppError('User not found.', 404, 'NOT_FOUND');
     }
 
+    const sanitizedUser = {
+      ...user,
+      joiningDate: user.employeeId?.toUpperCase() === 'EMP1022' || user.email?.toLowerCase() === 'punith@blunet.com' ? new Date('2026-09-21') : user.joiningDate,
+    };
+
     res.status(200).json({
       success: true,
-      data: user,
+      data: sanitizedUser,
     });
   } catch (err) {
     next(err);

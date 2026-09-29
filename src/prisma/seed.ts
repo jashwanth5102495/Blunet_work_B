@@ -94,7 +94,7 @@ async function main() {
       designation: 'Software Engineer',
       departmentId: deptEng.id,
       organization: 'BLUNET',
-      joiningDate: new Date('2024-03-01'),
+      joiningDate: new Date('2026-09-21'),
     },
   });
 

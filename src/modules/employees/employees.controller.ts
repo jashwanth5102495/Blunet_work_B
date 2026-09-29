@@ -59,8 +59,10 @@ export const getEmployees = async (req: Request, res: Response, next: NextFuncti
       const progressRate = total > 0 ? Math.round((completed / total) * 100) : 0;
       const { assignedTasks, ...rest } = emp;
 
+      const isPunith = emp.employeeId?.toUpperCase() === 'EMP1022' || emp.email?.toLowerCase() === 'punith@blunet.com';
       return {
         ...rest,
+        joiningDate: isPunith ? new Date('2026-09-21') : emp.joiningDate,
         taskStats: {
           total,
           completed,
@@ -140,6 +142,84 @@ export const createEmployee = async (req: Request, res: Response, next: NextFunc
       success: true,
       data: employee,
       message: `Employee ${employee.name} (${employee.employeeId}) created successfully.`,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getNextCoInternId = async (): Promise<string> => {
+  const allUsers = await db.user.findMany({ select: { employeeId: true } });
+  let highestNum = 425; // starting count starts from 426
+  for (const u of allUsers) {
+    const match = u.employeeId.match(/^CO-IN(\d+)$/i);
+    if (match) {
+      const num = parseInt(match[1], 10);
+      if (num > highestNum) highestNum = num;
+    }
+  }
+  const nextNum = highestNum + 1;
+  return `CO-IN${String(nextNum).padStart(5, '0')}`;
+};
+
+export const getNextCoInternIdEndpoint = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const nextId = await getNextCoInternId();
+    res.status(200).json({ success: true, data: { nextId } });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const createCoIntern = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { name, email, phone, designation = 'Co-Intern', departmentId, temporaryPassword, organization } = req.body;
+
+    if (!name || !email || !temporaryPassword) {
+      throw new AppError('Name, email, and temporary password are required.', 400, 'MISSING_FIELDS');
+    }
+
+    const existingEmail = await db.user.findUnique({ where: { email } });
+    if (existingEmail) {
+      throw new AppError('An employee with this email already exists.', 400, 'DUPLICATE_EMAIL');
+    }
+
+    const employeeId = await getNextCoInternId();
+    const passwordHash = await hashPassword(temporaryPassword);
+    const targetOrg = organization ? String(organization).toUpperCase() : 'BLUNET';
+
+    const coIntern = await db.user.create({
+      data: {
+        employeeId,
+        name,
+        email,
+        phone: phone || null,
+        role: 'EMPLOYEE',
+        designation: designation || 'Co-Intern',
+        departmentId: departmentId || null,
+        organization: targetOrg,
+        passwordHash,
+        joiningDate: new Date(),
+      },
+      select: {
+        id: true,
+        employeeId: true,
+        name: true,
+        email: true,
+        role: true,
+        designation: true,
+        departmentId: true,
+        joiningDate: true,
+        isActive: true,
+      },
+    });
+
+    await logAudit(req.user?.userId, 'CO_INTERN_CREATED', 'User', coIntern.id, { employeeId, designation }, req.ip);
+
+    res.status(201).json({
+      success: true,
+      data: coIntern,
+      message: `Co-Intern ${coIntern.name} (${coIntern.employeeId}) created successfully as employee.`,
     });
   } catch (err) {
     next(err);

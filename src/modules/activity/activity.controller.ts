@@ -72,7 +72,10 @@ export const getSessionSummary = async (req: Request, res: Response, next: NextF
     const sessions = await db.activitySession.findMany({
       where: {
         userId,
-        createdAt: { gte: todayStart },
+        OR: [
+          { loginAt: { gte: todayStart } },
+          { createdAt: { gte: todayStart } },
+        ],
       },
     });
 
