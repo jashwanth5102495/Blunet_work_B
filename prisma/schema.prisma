@@ -254,6 +254,10 @@ model ActivitySession {
   idleSeconds     Int       @default(0)
   lastHeartbeatAt DateTime  @default(now())
   createdAt       DateTime  @default(now())
+
+  @@index([userId])
+  @@index([userId, logoutAt])
+  @@index([loginAt])
 }
 
 model Notification {

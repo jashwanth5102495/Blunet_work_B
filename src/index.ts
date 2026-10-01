@@ -40,6 +40,18 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
+// Network Timing & Latency Diagnostic Middleware
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    if (duration > 300) {
+      console.log(`[Network Timing] ${req.method} ${req.originalUrl} - Status: ${res.statusCode} (${duration} ms)`);
+    }
+  });
+  next();
+});
+
 // Lightweight Healthcheck Endpoints for Vercel/Railway health probes
 const healthHandler = (req: express.Request, res: express.Response) => {
   res.status(200).json({
