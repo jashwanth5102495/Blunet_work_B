@@ -342,3 +342,355 @@ export const getAdminStudyOverview = async (req: Request, res: Response, next: N
     next(err);
   }
 };
+
+// -------------------------------------------------------------
+// CO-INTERN STUDY TOPICS CONTROLLER METHODS (12 TOPICS)
+// -------------------------------------------------------------
+export const INITIAL_CO_INTERN_TOPICS = [
+  {
+    topicNumber: 1,
+    title: 'Nice page for two days',
+    duration: '2 days',
+    week: 1,
+    status: 'OPEN',
+    content: `### Topic 1: Nice Page Implementation Guide
+**Duration**: 2 Days | **Level**: Beginner
+
+#### Overview
+Nicepage is a drag-and-drop web design tool and HTML generator. In this topic, co-interns will learn layout structure, section design, responsive breakpoints, and exporting clean code.
+
+#### Key Objectives
+- Understand block-based web layout structure
+- Design mobile-responsive header and hero sections
+- Export clean HTML/CSS code for BluNet integration
+
+#### Hands-On Exercise
+1. Build a 3-section landing page with Hero, Features, and Contact Footer.
+2. Test responsive layout on Desktop, Tablet, and Mobile viewports.
+3. Export HTML/CSS and inspect element styling.`,
+  },
+  {
+    topicNumber: 2,
+    title: 'Git for 4 days',
+    duration: '4 days',
+    week: 1,
+    status: 'OPEN',
+    content: `### Topic 2: Git Version Control Mastery
+**Duration**: 4 Days | **Level**: Intermediate
+
+#### Overview
+Git is essential for team collaboration. This 4-day module covers core Git workflow, branching strategy, pull requests, resolving merge conflicts, and rebase best practices.
+
+#### Day-by-Day Roadmap
+- **Day 1**: Git Basics (\`init\`, \`add\`, \`commit\`, \`status\`, \`log\`)
+- **Day 2**: Branching Strategy (\`git checkout -b\`, \`git merge\`, \`git branch -d\`)
+- **Day 3**: GitHub/GitLab Collaboration (Remote repos, Pull Requests, Code Reviews)
+- **Day 4**: Resolving Merge Conflicts & Interactive Rebase
+
+\`\`\`bash
+# Basic Git Command Flow
+git checkout -b feature/co-intern-dashboard
+git add .
+git commit -m "feat: implement co-intern study resource tab"
+git push origin feature/co-intern-dashboard
+\`\`\``,
+  },
+  {
+    topicNumber: 3,
+    title: 'AWS for 4 days',
+    duration: '4 days',
+    week: 1,
+    status: 'OPEN',
+    content: `### Topic 3: Amazon Web Services (AWS) Cloud Fundamentals
+**Duration**: 4 Days | **Level**: Intermediate
+
+#### Overview
+Introduction to cloud computing infrastructure using AWS services: IAM, EC2, S3, RDS, and CloudFront.
+
+#### Key Services Covered
+1. **IAM (Identity & Access Management)**: Roles, Policies, Least privilege access
+2. **EC2 (Elastic Compute Cloud)**: Launching Linux instances, SSH security groups
+3. **S3 (Simple Storage Service)**: Buckets, Static website hosting, Presigned URLs
+4. **RDS & CloudFront**: Relational databases and CDN distribution setup
+
+\`\`\`bash
+# AWS CLI S3 Sync Command
+aws s3 sync ./dist s3://blunet-intern-app-bucket --acl public-read
+\`\`\``,
+  },
+  {
+    topicNumber: 4,
+    title: 'Docker for 5 days',
+    duration: '5 days',
+    week: 1,
+    status: 'OPEN',
+    content: `### Topic 4: Containerization with Docker & Docker Compose
+**Duration**: 5 Days | **Level**: Intermediate to Advanced
+
+#### Overview
+Containerize Node.js/React web applications and manage multi-container environments.
+
+#### Syllabus
+- **Day 1**: Containers vs Virtual Machines & Installing Docker
+- **Day 2**: Writing production-grade \`Dockerfile\` & \`.dockerignore\`
+- **Day 3**: Multi-stage Docker builds for React and Node.js
+- **Day 4**: \`docker-compose.yml\` networking and PostgreSQL integration
+- **Day 5**: Container optimization, health checks, and Docker Volume persistence
+
+\`\`\`dockerfile
+# Production Node.js Dockerfile Example
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM node:20-alpine AS runner
+WORKDIR /app
+COPY --from=builder /app/dist ./dist
+CMD ["node", "dist/index.js"]
+\`\`\``,
+  },
+  {
+    topicNumber: 5,
+    title: 'jenkins for 4 days',
+    duration: '4 days',
+    week: 2,
+    status: 'OPEN',
+    content: `### Topic 5: Jenkins CI/CD Automation Pipeline
+**Duration**: 4 Days | **Level**: Advanced
+
+#### Overview
+Automate building, testing, and deploying web applications using Jenkins automation server and declarative Jenkinsfiles.
+
+#### Topics Covered
+- Setting up Jenkins server with Docker
+- Configuring GitHub Webhooks & Credentials
+- Writing Declarative \`Jenkinsfile\` Pipelines (Build, Test, SonarQube, Deploy steps)
+- Automated deployment to staging and production servers`,
+  },
+  {
+    topicNumber: 6,
+    title: 'versal for 2 days',
+    duration: '2 days',
+    week: 2,
+    status: 'OPEN',
+    content: `### Topic 6: Vercel Cloud Deployment & Edge Functions
+**Duration**: 2 Days | **Level**: Beginner to Intermediate
+
+#### Overview
+Deploy frontend applications, Next.js / Vite React apps, custom domains, and environment variables on Vercel platform.
+
+#### Key Tasks
+1. Linking GitHub repository to Vercel account
+2. Configuring Environment Variables for Staging and Production
+3. Setting up automatic preview deployments on Pull Requests
+4. Optimizing build caching and headers`,
+  },
+  {
+    topicNumber: 7,
+    title: 'prompt engneering with react for 5 days',
+    duration: '5 days',
+    week: 2,
+    status: 'OPEN',
+    content: `### Topic 7: Prompt Engineering with React Integration
+**Duration**: 5 Days | **Level**: Advanced
+
+#### Overview
+Build AI-powered React web applications leveraging structured prompt engineering, LLM API calls, streaming responses, and UI state management.
+
+#### Curriculum
+- **Day 1**: System Prompts, Few-shot prompting, and JSON mode outputs
+- **Day 2**: Integrating OpenAI / Gemini API in React frontend applications
+- **Day 3**: Handling streaming responses (\`EventSource\` / ReadableStreams)
+- **Day 4**: Context window management & dynamic context injection
+- **Day 5**: Building an AI Assistant Widget with custom React hooks`,
+  },
+  {
+    topicNumber: 8,
+    title: 'Nmap for 3 days',
+    duration: '3 days',
+    week: 2,
+    status: 'OPEN',
+    content: `### Topic 8: Nmap Network Scanning & Security Auditing
+**Duration**: 3 Days | **Level**: Intermediate
+
+#### Overview
+Learn network discovery and vulnerability scanning using Nmap (Network Mapper).
+
+#### Core Concepts
+- Host discovery and ping sweeps (\`nmap -sn\`)
+- Port scanning techniques (SYN scan \`-sS\`, Connect scan \`-sT\`, UDP scan \`-sU\`)
+- Service version detection (\`-sV\`) and OS detection (\`-O\`)
+- Using Nmap Scripting Engine (NSE) for security auditing`,
+  },
+  {
+    topicNumber: 9,
+    title: 'wireshark for 2 days',
+    duration: '2 days',
+    week: 3,
+    status: 'OPEN',
+    content: `### Topic 9: Wireshark Packet Analysis & Traffic Inspection
+**Duration**: 2 Days | **Level**: Intermediate
+
+#### Overview
+Inspect live network traffic, analyze TCP/IP three-way handshakes, HTTP/HTTPS headers, and troubleshoot network latency issues.
+
+#### Exercises
+1. Capturing HTTP requests and filtering by protocol (\`http\`, \`dns\`, \`tcp.port == 443\`)
+2. Analyzing TCP retransmissions, latency, and packet loss
+3. Exporting packet captures (.pcap) for analysis`,
+  },
+  {
+    topicNumber: 10,
+    title: 'python for 5 days',
+    duration: '5 days',
+    week: 3,
+    status: 'OPEN',
+    content: `### Topic 10: Python Essentials & Backend Scripting
+**Duration**: 5 Days | **Level**: Intermediate
+
+#### Overview
+Master Python data structures, object-oriented programming, REST API development with FastAPI / Flask, and script automation.
+
+#### Syllabus
+- **Day 1**: Data structures (Lists, Dicts, Sets, Tuples, List Comprehensions)
+- **Day 2**: Object-Oriented Programming (Classes, Inheritance, Dunder Methods)
+- **Day 3**: File I/O, AsyncIO, and JSON parsing
+- **Day 4**: Building REST APIs with FastAPI / Flask
+- **Day 5**: Database integration with SQLAlchemy / asyncpg`,
+  },
+  {
+    topicNumber: 11,
+    title: 'javascript for 5 days',
+    duration: '5 days',
+    week: 3,
+    status: 'OPEN',
+    content: `### Topic 11: JavaScript Deep Dive & ES6+ Features
+**Duration**: 5 Days | **Level**: Advanced
+
+#### Overview
+In-depth JavaScript engine fundamentals, Event Loop, Closures, Prototypes, Promises, and Async/Await.
+
+#### Deep Dive Topics
+- Execution Context, Call Stack, and Microtask Queue
+- Lexical Scope & Closures
+- Prototype Chain and ES6 Class Syntax
+- Asynchronous JS: Promises, \`Promise.allSettled\`, Async Generators
+- Functional Programming Concepts (Immutability, Map, Reduce, Filter)`,
+  },
+  {
+    topicNumber: 12,
+    title: 'type script for 5 days',
+    duration: '5 days',
+    week: 3,
+    status: 'OPEN',
+    content: `### Topic 12: Production TypeScript Architecture
+**Duration**: 5 Days | **Level**: Advanced
+
+#### Overview
+Master TypeScript type system, generics, utility types, mapped types, conditional types, and strict mode compiler options.
+
+#### Key Skills
+- Generics (\`<T>\`, \`keyof T\`, \`Record<K, V>\`)
+- Utility Types (\`Partial\`, \`Pick\`, \`Omit\`, \`Readonly\`, \`ReturnType\`)
+- Discriminated Unions and Type Guards (\`is\` keyword)
+- Setting up strict \`tsconfig.json\` for React & Node.js projects`,
+  },
+];
+
+export const getCoInternTopics = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    let topics = await db.coInternStudyTopic.findMany({
+      orderBy: { topicNumber: 'asc' },
+    });
+
+    if (topics.length === 0) {
+      for (const item of INITIAL_CO_INTERN_TOPICS) {
+        await db.coInternStudyTopic.create({
+          data: item,
+        });
+      }
+      topics = await db.coInternStudyTopic.findMany({
+        orderBy: { topicNumber: 'asc' },
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: topics,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const toggleCoInternTopicStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const role = req.user?.role;
+    if (role === 'EMPLOYEE') {
+      res.status(403).json({ success: false, message: 'Admin access required.' });
+      return;
+    }
+
+    const topicId = String(req.params.id);
+    const existing = await db.coInternStudyTopic.findUnique({ where: { id: topicId } });
+    if (!existing) {
+      res.status(404).json({ success: false, message: 'Topic not found.' });
+      return;
+    }
+
+    const newStatus = existing.status === 'OPEN' ? 'CLOSED' : 'OPEN';
+    const updated = await db.coInternStudyTopic.update({
+      where: { id: topicId },
+      data: { status: newStatus },
+    });
+
+    res.status(200).json({
+      success: true,
+      data: updated,
+      message: `Topic status changed to ${newStatus}`,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const updateCoInternTopicContent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const role = req.user?.role;
+    if (role === 'EMPLOYEE') {
+      res.status(403).json({ success: false, message: 'Admin access required.' });
+      return;
+    }
+
+    const topicId = String(req.params.id);
+    const { title, duration, content, status } = req.body;
+
+    const existing = await db.coInternStudyTopic.findUnique({ where: { id: topicId } });
+    if (!existing) {
+      res.status(404).json({ success: false, message: 'Topic not found.' });
+      return;
+    }
+
+    const updated = await db.coInternStudyTopic.update({
+      where: { id: topicId },
+      data: {
+        ...(title !== undefined && { title }),
+        ...(duration !== undefined && { duration }),
+        ...(content !== undefined && { content }),
+        ...(status !== undefined && { status }),
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      data: updated,
+      message: 'Co-Intern topic updated successfully!',
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+

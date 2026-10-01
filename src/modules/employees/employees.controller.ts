@@ -60,9 +60,18 @@ export const getEmployees = async (req: Request, res: Response, next: NextFuncti
       const { assignedTasks, ...rest } = emp;
 
       const isPunith = emp.employeeId?.toUpperCase() === 'EMP1022' || emp.email?.toLowerCase() === 'punith@blunet.com';
+      const isCoInternSpecific =
+        emp.employeeId?.toUpperCase() === 'CO-IN00426' ||
+        emp.employeeId?.toUpperCase() === 'CO-IN00427' ||
+        emp.employeeId?.toUpperCase().startsWith('CO-IN');
+
       return {
         ...rest,
-        joiningDate: isPunith ? new Date('2026-09-21') : emp.joiningDate,
+        joiningDate: isPunith
+          ? new Date('2026-09-21')
+          : isCoInternSpecific
+          ? new Date('2026-10-05')
+          : emp.joiningDate,
         taskStats: {
           total,
           completed,
@@ -173,7 +182,7 @@ export const getNextCoInternIdEndpoint = async (req: Request, res: Response, nex
 
 export const createCoIntern = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const { name, email, phone, designation = 'Co-Intern', departmentId, temporaryPassword, organization } = req.body;
+    const { name, email, phone, designation = 'Co-Intern', departmentId, temporaryPassword, organization, joiningDate } = req.body;
 
     if (!name || !email || !temporaryPassword) {
       throw new AppError('Name, email, and temporary password are required.', 400, 'MISSING_FIELDS');
@@ -187,6 +196,7 @@ export const createCoIntern = async (req: Request, res: Response, next: NextFunc
     const employeeId = await getNextCoInternId();
     const passwordHash = await hashPassword(temporaryPassword);
     const targetOrg = organization ? String(organization).toUpperCase() : 'BLUNET';
+    const parsedJoiningDate = joiningDate ? new Date(joiningDate) : new Date('2026-10-05');
 
     const coIntern = await db.user.create({
       data: {
@@ -199,7 +209,7 @@ export const createCoIntern = async (req: Request, res: Response, next: NextFunc
         departmentId: departmentId || null,
         organization: targetOrg,
         passwordHash,
-        joiningDate: new Date(),
+        joiningDate: parsedJoiningDate,
       },
       select: {
         id: true,

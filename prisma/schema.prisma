@@ -314,3 +314,17 @@ model UserCodingTaskSubmission {
   @@unique([userId, month, taskId])
   @@index([userId, month])
 }
+
+model CoInternStudyTopic {
+  id          String   @id @default(uuid())
+  topicNumber Int      @unique
+  title       String
+  duration    String
+  week        Int      // 1, 2, 3
+  status      String   @default("OPEN") // OPEN or CLOSED
+  content     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([week])
+}
