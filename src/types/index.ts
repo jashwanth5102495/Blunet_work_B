@@ -2,7 +2,7 @@ export type Role = 'EMPLOYEE' | 'MARKETING_HEAD' | 'ADMIN' | 'FOUNDER';
 
 export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
 
-export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'OVERDUE';
+export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'SUBMITTED' | 'COMPLETED' | 'CANCELLED' | 'OVERDUE';
 
 export type LeadStatus =
   | 'LOCKED'

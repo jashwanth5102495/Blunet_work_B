@@ -4,11 +4,12 @@ import { AppError } from '../../middleware/errorHandler.js';
 import { logAudit } from '../../utils/audit.js';
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
-  TODO: ['IN_PROGRESS', 'CANCELLED'],
-  IN_PROGRESS: ['COMPLETED', 'TODO', 'CANCELLED'],
-  COMPLETED: ['IN_PROGRESS'],
+  TODO: ['IN_PROGRESS', 'SUBMITTED', 'CANCELLED'],
+  IN_PROGRESS: ['SUBMITTED', 'COMPLETED', 'TODO', 'CANCELLED'],
+  SUBMITTED: ['IN_PROGRESS', 'COMPLETED', 'TODO', 'CANCELLED'],
+  COMPLETED: ['IN_PROGRESS', 'SUBMITTED'],
   CANCELLED: ['TODO'],
-  OVERDUE: ['IN_PROGRESS', 'COMPLETED'],
+  OVERDUE: ['IN_PROGRESS', 'SUBMITTED', 'COMPLETED'],
 };
 
 export const getMyTasks = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -136,7 +137,7 @@ export const createTask = async (req: Request, res: Response, next: NextFunction
 export const updateTaskStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const id = String(req.params.id);
-    const { status } = req.body;
+    const { status, submissionDetails, submissionLinks } = req.body;
     const userId = req.user?.userId;
     const role = req.user?.role;
 
@@ -166,6 +167,49 @@ export const updateTaskStatus = async (req: Request, res: Response, next: NextFu
         assignedTo: { select: { id: true, name: true, employeeId: true } },
       },
     });
+
+    if (status === 'SUBMITTED' && (submissionDetails || submissionLinks)) {
+      let content = `📌 WORK SUBMISSION FOR REVIEW:\n\n${submissionDetails || 'No details provided.'}`;
+      if (submissionLinks) {
+        content += `\n\n🔗 Links / Proofs:\n${submissionLinks}`;
+      }
+      await db.taskComment.create({
+        data: {
+          taskId: id,
+          authorId: userId!,
+          content,
+        },
+      });
+    }
+
+    if (status === 'SUBMITTED' && task.assignedById !== userId) {
+      await db.notification.create({
+        data: {
+          userId: task.assignedById,
+          title: 'Task Work Submitted',
+          message: `Task "${task.title}" work was submitted by ${req.user?.name || 'an employee'} for review.`,
+          link: '/tasks',
+        },
+      });
+    } else if (status === 'COMPLETED' && task.assignedToId !== userId) {
+      await db.notification.create({
+        data: {
+          userId: task.assignedToId,
+          title: 'Task Approved & Completed',
+          message: `Task "${task.title}" has been reviewed and marked completed by ${req.user?.name || 'Admin'}.`,
+          link: '/tasks',
+        },
+      });
+    } else if (task.status === 'SUBMITTED' && status === 'IN_PROGRESS' && task.assignedToId !== userId) {
+      await db.notification.create({
+        data: {
+          userId: task.assignedToId,
+          title: 'Task Revision Requested',
+          message: `Revision requested for task "${task.title}" by ${req.user?.name || 'Admin'}.`,
+          link: '/tasks',
+        },
+      });
+    }
 
     await logAudit(userId, 'TASK_STATUS_UPDATED', 'Task', id, { from: task.status, to: status }, req.ip);
 
